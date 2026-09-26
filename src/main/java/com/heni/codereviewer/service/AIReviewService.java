@@ -21,14 +21,43 @@ public class AIReviewService {
                 .build();
     }
 
-    public AIReviewResponse review(ChangedFile file) {
+    public AIReviewResponse review(
+            ChangedFile file,
+            String repositoryContext) {
 
         String prompt = """
                 You are an expert senior software engineer reviewing a GitHub pull request.
 
-                Analyze ONLY the code changes in the provided patch.
+                Analyze the provided code change using both:
+                1. The changed patch
+                2. Relevant repository context
 
-                Report an issue ONLY when there is a concrete problem introduced by the change.
+                Use repository context to understand:
+                - existing interfaces
+                - method contracts
+                - dependencies
+                - data models
+                - repository/service interactions
+                - existing implementation behavior
+
+                IMPORTANT:
+                The CHANGED FILE and PATCH represent the only code being modified by this PR.
+
+                The REPOSITORY CONTEXT contains existing code that is provided only
+                to help understand dependencies and behavior.
+
+                Do NOT report issues solely because of problems in repository context.
+                Only report an issue when the PATCH introduces or causes the problem.
+
+                When repository context conflicts with the patch, prioritize the actual
+                changed code and use the repository context to understand its behavior.
+
+                Do NOT report:
+                - stylistic preferences
+                - generic best practices
+                - hypothetical issues without evidence
+                - unrelated existing problems
+                - documentation suggestions
 
                 Look for:
                 - BUG
@@ -40,14 +69,6 @@ public class AIReviewService {
 
                 Severity must be one of:
                 CRITICAL, HIGH, MEDIUM, LOW
-
-                Do NOT report:
-                - stylistic preferences
-                - generic best practices
-                - hypothetical issues without evidence
-                - unrelated code
-                - logging suggestions
-                - documentation suggestions
 
                 Return ONLY valid JSON in exactly this format:
 
@@ -71,14 +92,18 @@ public class AIReviewService {
                   "issues": []
                 }
 
-                File:
+                === CHANGED FILE ===
                 %s
 
-                Patch:
+                === PATCH ===
+                %s
+
+                === REPOSITORY CONTEXT ===
                 %s
                 """.formatted(
                 file.getFilename(),
-                file.getPatch()
+                file.getPatch(),
+                repositoryContext
         );
 
         String response = restClient.post()
@@ -91,11 +116,18 @@ public class AIReviewService {
                 .retrieve()
                 .body(OllamaResponse.class)
                 .response();
-                
 
         try {
-                String cleanedResponse = response.replace("```json", "").replace("```", "").trim();
-                return objectMapper.readValue(cleanedResponse, AIReviewResponse.class);
+            String cleanedResponse = response
+                    .replace("```json", "")
+                    .replace("```", "")
+                    .trim();
+
+            return objectMapper.readValue(
+                    cleanedResponse,
+                    AIReviewResponse.class
+            );
+
         } catch (Exception e) {
             throw new RuntimeException(
                     "Failed to parse Ollama response: " + response,
@@ -108,9 +140,11 @@ public class AIReviewService {
             String model,
             String prompt,
             boolean stream
-    ) {}
+    ) {
+    }
 
     private record OllamaResponse(
             String response
-    ) {}
+    ) {
+    }
 }

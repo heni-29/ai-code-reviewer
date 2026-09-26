@@ -6,12 +6,19 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 
 @Service
 public class GitHubService {
 
     private final RestClient restClient;
+
+    private record GitHubFileResponse(
+            String content
+    ) {
+    }
 
     public GitHubService() {
 
@@ -40,6 +47,45 @@ public class GitHubService {
                 .build();
     }
 
+    private record GitHubTreeResponse(
+                List<GitHubTreeItem> tree
+        ) {
+        }
+
+        private record GitHubTreeItem(
+                String path,
+                String type
+        ) {
+        }
+
+    public List<String> getRepositoryFilePaths(
+                String owner,
+                String repository,
+                String commitSha) {
+
+        String endpoint = String.format(
+                "/repos/%s/%s/git/trees/%s?recursive=1",
+                owner,
+                repository,
+                commitSha
+        );
+
+        GitHubTreeResponse response =
+                restClient.get()
+                        .uri(endpoint)
+                        .retrieve()
+                        .body(GitHubTreeResponse.class);
+
+        if (response == null || response.tree() == null) {
+                return List.of();
+        }
+
+        return response.tree().stream()
+                .filter(item -> "blob".equals(item.type()))
+                .map(GitHubTreeItem::path)
+                .toList();
+        }
+
     public List<ChangedFile> getPullRequestFiles(
             String owner,
             String repository,
@@ -60,6 +106,41 @@ public class GitHubService {
                                 List<ChangedFile>
                                 >() {}
                 );
+    }
+
+    public String getFileContent(
+            String owner,
+            String repository,
+            String path,
+            String ref) {
+
+        String endpoint = String.format(
+                "/repos/%s/%s/contents/%s?ref=%s",
+                owner,
+                repository,
+                path,
+                ref
+        );
+
+        GitHubFileResponse response =
+                restClient.get()
+                        .uri(endpoint)
+                        .retrieve()
+                        .body(GitHubFileResponse.class);
+
+        if (response == null ||
+                response.content() == null) {
+
+            return "";
+        }
+
+        String encodedContent =
+                response.content().replace("\n", "");
+
+        return new String(
+                Base64.getDecoder().decode(encodedContent),
+                StandardCharsets.UTF_8
+        );
     }
 
     public void postPullRequestComment(

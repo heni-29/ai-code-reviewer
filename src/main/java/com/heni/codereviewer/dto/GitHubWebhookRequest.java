@@ -41,25 +41,47 @@ public class GitHubWebhookRequest {
 
     public static class PullRequest {
 
-        private String title;
-        private User user;
+            private String title;
+            private User user;
+            private Head head;
 
-        public String getTitle() {
-            return title;
+            public String getTitle() {
+                return title;
+            }
+
+            public void setTitle(String title) {
+                this.title = title;
+            }
+
+            public User getUser() {
+                return user;
+            }
+
+            public void setUser(User user) {
+                this.user = user;
+            }
+
+            public Head getHead() {
+                return head;
+            }
+
+            public void setHead(Head head) {
+                this.head = head;
+            }
         }
 
-        public void setTitle(String title) {
-            this.title = title;
-        }
+        public static class Head {
 
-        public User getUser() {
-            return user;
-        }
+            private String sha;
 
-        public void setUser(User user) {
-            this.user = user;
+            public String getSha() {
+                return sha;
+            }
+
+            public void setSha(String sha) {
+                this.sha = sha;
+            }
         }
-    }
 
     public static class User {
 

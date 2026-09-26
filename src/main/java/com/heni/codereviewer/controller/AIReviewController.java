@@ -20,7 +20,7 @@ public class AIReviewController {
     }
 
     @PostMapping("/test")
-    public AIReviewResponse testReview(@RequestBody ChangedFile file) {
-        return aiReviewService.review(file);
+    public AIReviewResponse testReview(@RequestBody ChangedFile file, String repositoryContext) {
+        return aiReviewService.review(file, repositoryContext);
     }
 }
