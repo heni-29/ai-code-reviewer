@@ -1,4 +1,3 @@
-cat > README.md <<'EOF'
 # AI Code Reviewer
 
 An AI powered GitHub Pull Request reviewer built with **Java, Spring Boot, GitHub REST APIs, Ollama, Qwen 2.5 Coder, and PostgreSQL**.
