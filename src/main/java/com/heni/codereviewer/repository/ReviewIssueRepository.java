@@ -13,4 +13,10 @@ public interface ReviewIssueRepository
             String repository,
             int pullRequestNumber
     );
+
+    boolean existsByRepositoryAndPullRequestNumberAndCommitSha(
+                String repository,
+                int pullRequestNumber,
+                String commitSha
+);
 }

@@ -1,0 +1,29 @@
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: ai-code-reviewer-db
+    environment:
+      POSTGRES_DB: code_reviewer
+      POSTGRES_USER: reviewer
+      POSTGRES_PASSWORD: reviewer
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    container_name: ai-code-reviewer-backend
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/code_reviewer
+      SPRING_DATASOURCE_USERNAME: reviewer
+      SPRING_DATASOURCE_PASSWORD: reviewer
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+
+volumes:
+  postgres_data:

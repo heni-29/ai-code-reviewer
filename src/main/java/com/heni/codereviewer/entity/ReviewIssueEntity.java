@@ -30,7 +30,17 @@ public class ReviewIssueEntity {
 
     private int pullRequestNumber;
 
+    private String commitSha;
+
     public ReviewIssueEntity() {
+    }
+
+    public String getCommitSha() {
+        return commitSha;
+    }
+
+    public void setCommitSha(String commitSha) {
+        this.commitSha = commitSha;
     }
 
     public Long getId() {
@@ -122,6 +132,7 @@ public class ReviewIssueEntity {
                 ", confidence=" + confidence +
                 ", repository='" + repository + '\'' +
                 ", pullRequestNumber=" + pullRequestNumber +
+                ", commitSha='" + commitSha + '\'' +
                 '}';
     }
 }

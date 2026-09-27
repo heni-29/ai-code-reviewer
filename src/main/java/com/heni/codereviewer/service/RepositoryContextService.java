@@ -20,10 +20,6 @@ public class RepositoryContextService {
                     "import\\s+(?:static\\s+)?([\\w.]+)(?:\\.\\*)?;"
             );
 
-    private static final Pattern PACKAGE_PATTERN =
-            Pattern.compile(
-                    "package\\s+([\\w.]+);"
-            );
 
     public RepositoryContextService(
             GitHubService gitHubService) {
@@ -145,35 +141,23 @@ public class RepositoryContextService {
                 relatedFiles.add(matchingPath);
             }
         }
+        
+        Set<String> referencedTypes = extractReferencedTypes(sourceCode);
 
-        // Same-package classes
-        String packageName =
-                extractPackage(sourceCode);
+        for (String type : referencedTypes) {
 
-        if (packageName != null) {
+            String matchingPath =
+                    findMatchingJavaFile(
+                            repositoryFiles,
+                            type
+                    );
 
-            String packagePath =
-                    packageName.replace(".", "/");
+            if (matchingPath != null
+                    && !matchingPath.equals(changedFilePath)) {
 
-            for (String path : repositoryFiles) {
-
-                if (!path.endsWith(".java")) {
-                    continue;
-                }
-
-                if (path.equals(changedFilePath)) {
-                    continue;
-                }
-
-                if (path.contains(
-                        "/" + packagePath + "/"
-                )) {
-
-                    relatedFiles.add(path);
-                }
+                relatedFiles.add(matchingPath);
             }
-        }
-
+        }   
         return relatedFiles;
     }
 
@@ -201,18 +185,48 @@ public class RepositoryContextService {
         return imports;
     }
 
-    private String extractPackage(
+    
+    private Set<String> extractReferencedTypes(
             String sourceCode) {
 
-        Matcher matcher =
-                PACKAGE_PATTERN.matcher(sourceCode);
+        Set<String> types =
+                new LinkedHashSet<>();
 
-        if (matcher.find()) {
-            return matcher.group(1);
+        Pattern pattern =
+                Pattern.compile(
+                        "\\b([A-Z][A-Za-z0-9_]*)\\s+[a-z][A-Za-z0-9_]*"
+                );
+
+        Matcher matcher =
+                pattern.matcher(sourceCode);
+
+        while (matcher.find()) {
+
+            String type =
+                    matcher.group(1);
+
+            if (!isJavaBuiltInType(type)) {
+                types.add(type);
+            }
         }
 
-        return null;
+        return types;
     }
+
+    private boolean isJavaBuiltInType(
+        String type) {
+
+    return type.equals("String")
+            || type.equals("Integer")
+            || type.equals("Long")
+            || type.equals("Double")
+            || type.equals("Float")
+            || type.equals("Boolean")
+            || type.equals("Character")
+            || type.equals("Byte")
+            || type.equals("Short")
+            || type.equals("Object");
+}
 
     private boolean isExternalDependency(
             String importedClass) {
