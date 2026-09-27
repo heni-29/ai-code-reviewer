@@ -9,33 +9,25 @@ and posts review findings back to the GitHub PR.
 
 ## Architecture
 
-GitHub Pull Request
-        |
-        v
-GitHub Webhook
-        |
-        v
-Spring Boot Backend
-        |
-        +------------------+
-        |                  |
-        v                  v
-   GitHub API       Repository Context
-        |                  |
-        +--------+---------+
-                 |
-                 v
-          Qwen 2.5 Coder
-             via Ollama
-                 |
-                 v
-          Structured Review
-                 |
-          +------+------+
-          |             |
-          v             v
-     PostgreSQL     GitHub PR
-                    Comment
+```mermaid
+flowchart LR
+    A[GitHub Pull Request] --> B[GitHub Webhook]
+    B --> C[Spring Boot Backend]
+
+    C --> D[GitHub API]
+    C --> E[Repository Context]
+
+    D --> F[Changed Files]
+    E --> G[Related Repository Files]
+
+    F --> H[Qwen 2.5 Coder via Ollama]
+    G --> H
+
+    H --> I[Structured Review]
+
+    I --> J[(PostgreSQL)]
+    I --> K[GitHub PR Comment]
+```
 
 ## Features
 
