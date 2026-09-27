@@ -7,6 +7,13 @@ The application automatically analyzes changed files in a pull request,
 uses repository context to improve the analysis, stores detected issues,
 and posts review findings back to the GitHub PR.
 
+## Demo
+
+The reviewer analyzes pull requests and posts concrete findings directly
+to the GitHub PR.
+
+![AI Code Review Example](docs/images/ai-review-example.png)
+
 ## Architecture
 
 ```mermaid
