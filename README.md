@@ -12,7 +12,7 @@ and posts review findings back to the GitHub PR.
 The reviewer analyzes pull requests and posts concrete findings directly
 to the GitHub PR.
 
-![AI Code Review Example](docs/images/ai-review-example.png)
+![AI Code Review Example](docs/images/ai-reviewer-example.png)
 
 ## Architecture
 
