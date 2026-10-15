@@ -132,46 +132,48 @@ def diagnose_issue(state: AgentState) -> dict:
         }
 
     prompt = f"""
-You are a senior software engineer performing evidence-based debugging.
+        You are a senior software engineer performing evidence-based debugging.
 
-Issue:
-{state["issue"]}
+        Issue:
+        {state["issue"]}
 
-Repository:
-{state["repository"]}
+        Repository:
+        {state["repository"]}
 
-Branch:
-{state["branch"]}
+        Branch:
+        {state["branch"]}
 
-Investigation plan:
-{state["plan"]}
+        Investigation plan:
+        {state["plan"]}
 
-Source evidence:
-{context}
+        Source evidence:
+        {context}
 
-Follow these rules strictly:
-1. First inspect the supplied code for explicit bugs.
-2. Identify what the code demonstrably does, not what you assume it does.
-3. If an argument is hardcoded incorrectly, identify that as the direct cause.
-4. Do not blame callers, configuration, or external code without evidence.
-5. Separate confirmed observations from unverified hypotheses.
-6. Do not invent file paths, line numbers, or test results.
-7. If the evidence is insufficient, explicitly state what is missing.
+        Follow these rules strictly:
+        1. First inspect the supplied code for explicit bugs.
+        2. Identify what the code demonstrably does, not what you assume it does.
+        3. If an argument is hardcoded incorrectly, identify that as the direct cause.
+        4. Do not blame callers, configuration, or external code without evidence.
+        5. Separate confirmed observations from unverified hypotheses.
+        6. Do not invent file paths, line numbers, or test results.
+        7. If the evidence is insufficient, explicitly state what is missing.
 
-Return these sections:
+        Return these sections:
 
-ROOT CAUSE:
-Describe the most likely cause.
+        ROOT CAUSE:
+        State the confirmed root cause when the supplied code directly demonstrates it.
+        Use "Likely cause" only when the evidence supports a strong hypothesis but does not prove it.
+        If the evidence is insufficient, say so explicitly.
 
-DIRECT EVIDENCE:
-Quote the relevant supplied code and explain why it is problematic.
+        DIRECT EVIDENCE:
+        Quote the relevant supplied code and explain why it is problematic.
 
-HYPOTHESES:
-List any unverified assumptions, or state "None".
+        HYPOTHESES:
+        List any unverified assumptions, or state "None".
 
-REMAINING UNCERTAINTIES:
-Explain what cannot be determined from the supplied evidence.
-"""
+        REMAINING UNCERTAINTIES:
+        Explain what cannot be determined from the supplied evidence.
+        """
     return {"diagnosis": ask_model(prompt)}
 
 
