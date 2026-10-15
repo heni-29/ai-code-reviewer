@@ -178,11 +178,19 @@ Explain what cannot be determined from the supplied evidence.
 def propose_patch(state: AgentState) -> dict:
     context = state.get("retrieved_context", "").strip()
     diagnosis = state.get("diagnosis", "")
+    file_path = state.get("file_path", "").strip()
 
     if not context:
         return {
             "proposed_patch": (
                 "No patch proposed because no source evidence is available."
+            )
+        }
+
+    if not file_path:
+        return {
+            "proposed_patch": (
+                "No patch proposed because the source file path is unknown."
             )
         }
 
@@ -232,8 +240,7 @@ Requirements:
 - Prefix removed lines with - and added lines with +.
 - Include unchanged context lines with a leading space when appropriate.
 - Change only code supported by the supplied evidence.
-- Do not invent file paths. If the filename is unknown, use a clearly
-  labeled placeholder such as a/UnknownFile.java and b/UnknownFile.java.
+- Use only the provided file path. Never invent or substitute a file path.
 - Do not claim the patch has been applied or tested.
 - Do not include Markdown code fences.
 - If a safe fix cannot be determined, explain why instead of inventing one.

@@ -56,6 +56,21 @@ def test_propose_patch_without_context():
     assert "No patch proposed" in result["proposed_patch"]
 
 
+def test_propose_patch_rejects_unknown_file_path():
+    state = {
+        "issue": "Fix the calculation.",
+        "diagnosis": "The calculation adds quantity instead of multiplying it.",
+        "retrieved_context": "def calculate_total(price, quantity):\\n    return price + quantity",
+        "file_path": "",
+    }
+
+    result = propose_patch(state)
+
+    assert result["proposed_patch"] == (
+        "No patch proposed because the source file path is unknown."
+    )
+
+
 def test_propose_patch_uses_model():
     state = {
         "issue": "Fix the user lookup.",
@@ -65,11 +80,12 @@ def test_propose_patch_uses_model():
             "    return repository.findUser(null);\n"
             "}"
         ),
+        "file_path": "src/main/java/UserService.java",
     }
 
     expected = (
-        "--- a/UnknownFile.java\n"
-        "+++ b/UnknownFile.java\n"
+        "--- a/src/main/java/UserService.java\n"
+        "+++ b/src/main/java/UserService.java\n"
         "@@ -1,3 +1,3 @@\n"
         " public User getUser(Long id) {\n"
         "-    return repository.findUser(null);\n"
