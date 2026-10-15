@@ -1,7 +1,7 @@
 services:
 
   postgres:
-    image: postgres:16
+    image: pgvector/pgvector:pg16
     container_name: ai-code-reviewer-db
     environment:
       POSTGRES_DB: code_reviewer

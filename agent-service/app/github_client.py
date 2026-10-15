@@ -56,3 +56,13 @@ def get_repository_tree(
 
     finally:
         client.close()
+
+def get_repository_commit_sha(repository: str, ref: str = "main") -> str:
+    client = get_github_client()
+
+    try:
+        repo = client.get_repo(repository)
+        branch = repo.get_branch(ref)
+        return branch.commit.sha
+    finally:
+        client.close()

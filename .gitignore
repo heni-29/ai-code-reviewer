@@ -37,3 +37,6 @@ build/
 .vscode/
 # Java / Maven
 target/
+
+# Local database backup
+code_reviewer_backup.sql

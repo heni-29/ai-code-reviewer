@@ -1,8 +1,13 @@
 import os
-from app.github_client import get_repository_file
+from app.github_client import (
+    get_repository_commit_sha,
+    get_repository_file,
+)
+from app.ingestion.repository import index_repository
 from langchain_ollama import ChatOllama
 from app.graph.state import AgentState
 from app.graph.retrieval import select_relevant_files
+from app.ingestion.search import search_similar_chunks
 
 llm = ChatOllama(
     model=os.getenv("OLLAMA_MODEL", "qwen2.5-coder:7b"),
@@ -68,8 +73,43 @@ def retrieve_context(state: AgentState) -> dict:
                     f"```\n{source}\n```"
                 )
             }
+        # Otherwise, attempt semantic retrieval of relevant code chunks.
+        commit_sha = get_repository_commit_sha(
+            repository=repository,
+            ref=branch,
+        )
 
-        # Otherwise, select candidate files automatically.
+        # Ensure the current repository commit is indexed before semantic search.
+        index_repository(
+            repository=repository,
+            issue=issue,
+            ref=branch,
+        )
+
+        results = search_similar_chunks(
+            query=issue,
+            repository=repository,
+            commit_sha=commit_sha,
+            limit=5,
+        )
+
+        if results:
+            file_contents = []
+
+            for result in results:
+                file_contents.append(
+                    f"File: {result['file_path']}\n"
+                    f"Lines: {result['start_line']}-{result['end_line']}\n"
+                    f"Similarity: {result['similarity']:.3f}\n"
+                    f"```\n{result['content']}\n```"
+                )
+
+            return {
+                "retrieved_context": "\n\n".join(file_contents)
+            }
+
+        # Fall back to the existing heuristic retrieval if semantic
+        # retrieval has no indexed chunks yet.
         selected_files = select_relevant_files(
             repository=repository,
             issue=issue,
@@ -82,11 +122,10 @@ def retrieve_context(state: AgentState) -> dict:
                 "retrieved_context": "",
                 "retrieval_error": (
                     "Insufficient evidence: no relevant source files "
-                    "were found in the repository."
+                    "or indexed code chunks were found."
                 ),
             }
 
-        # Retrieve the selected files.
         file_contents = []
 
         for path in selected_files:
