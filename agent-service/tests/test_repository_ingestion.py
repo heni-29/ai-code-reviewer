@@ -117,3 +117,44 @@ def test_index_repository_skips_already_indexed_commit():
     assert stored == 0
     mock_ingest.assert_not_called()
     mock_store.assert_not_called()
+
+def test_index_repository_indexes_new_commit():
+    from unittest.mock import patch
+
+    with (
+        patch(
+            "app.ingestion.repository.get_repository_commit_sha",
+            return_value="new456",
+        ),
+        patch(
+            "app.ingestion.repository.has_indexed_commit",
+            return_value=False,
+        ),
+        patch(
+            "app.ingestion.repository.ingest_repository",
+            return_value=[],
+        ) as mock_ingest,
+        patch(
+            "app.ingestion.repository.store_chunks",
+            return_value=0,
+        ) as mock_store,
+    ):
+        commit_sha, stored = index_repository(
+            repository="demo/example",
+            issue="Fix user lookup",
+            ref="main",
+        )
+
+    assert commit_sha == "new456"
+    assert stored == 0
+
+    mock_ingest.assert_called_once_with(
+        repository="demo/example",
+        issue="Fix user lookup",
+        ref="main",
+        max_files=5,
+        max_lines=80,
+        commit_sha="new456",
+    )
+
+    mock_store.assert_called_once_with([])
