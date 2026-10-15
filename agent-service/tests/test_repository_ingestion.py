@@ -1,5 +1,4 @@
-from app.ingestion.repository import ingest_repository
-
+from app.ingestion.repository import ingest_repository, index_repository
 
 def test_ingest_repository_creates_chunks(monkeypatch):
     monkeypatch.setattr(
@@ -88,3 +87,33 @@ def test_index_repository_stores_chunks():
     assert commit_sha == "abc123"
     assert stored == 1
     mock_store.assert_called_once_with(chunks)
+
+def test_index_repository_skips_already_indexed_commit():
+    from unittest.mock import patch
+
+    with (
+        patch(
+            "app.ingestion.repository.get_repository_commit_sha",
+            return_value="abc123",
+        ),
+        patch(
+            "app.ingestion.repository.has_indexed_commit",
+            return_value=True,
+        ),
+        patch(
+            "app.ingestion.repository.ingest_repository",
+        ) as mock_ingest,
+        patch(
+            "app.ingestion.repository.store_chunks",
+        ) as mock_store,
+    ):
+        commit_sha, stored = index_repository(
+            repository="demo/example",
+            issue="Fix user lookup",
+            ref="main",
+        )
+
+    assert commit_sha == "abc123"
+    assert stored == 0
+    mock_ingest.assert_not_called()
+    mock_store.assert_not_called()

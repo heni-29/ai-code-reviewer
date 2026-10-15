@@ -2,6 +2,25 @@ from app.database import get_connection
 from app.embeddings import embed_text
 from app.ingestion.chunker import CodeChunk
 
+def has_indexed_commit(
+    repository: str,
+    commit_sha: str,
+) -> bool:
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM code_chunks
+                    WHERE repository = %s
+                      AND commit_sha = %s
+                )
+                """,
+                (repository, commit_sha),
+            )
+
+            return bool(cursor.fetchone()[0])
 
 def store_chunks(chunks: list[CodeChunk]) -> int:
     if not chunks:
