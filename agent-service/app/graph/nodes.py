@@ -3,6 +3,7 @@ from app.github_client import (
     get_repository_commit_sha,
     get_repository_file,
 )
+from app.graph.patch_validator import validate_patch
 from app.ingestion.repository import index_repository
 from langchain_ollama import ChatOllama
 from app.graph.state import AgentState
@@ -236,7 +237,6 @@ def propose_patch(state: AgentState) -> dict:
         }
 
     diagnosis_lower = diagnosis.lower()
-
     insufficient_evidence_phrases = (
         "insufficient evidence",
         "evidence is insufficient",
@@ -261,35 +261,50 @@ def propose_patch(state: AgentState) -> dict:
         }
 
     prompt = f"""
-You are a senior software engineer proposing a minimal bug fix.
+    You are a senior software engineer proposing a minimal bug fix.
 
-Issue:
-{state["issue"]}
+    Issue:
+    {state["issue"]}
 
-Diagnosis:
-{diagnosis}
+    Diagnosis:
+    {diagnosis}
 
-Supplied source code:
-{context}
+    Supplied source code:
+    {context}
 
-Return a unified diff showing the proposed changes.
+    Return a unified diff showing the proposed changes.
 
-Requirements:
-- Use standard unified diff format.
-- Include --- and +++ file headers.
-- Include an @@ hunk header.
-- Prefix removed lines with - and added lines with +.
-- Include unchanged context lines with a leading space when appropriate.
-- Change only code supported by the supplied evidence.
-- Use only the provided file path. Never invent or substitute a file path.
-- Do not claim the patch has been applied or tested.
-- Do not include Markdown code fences.
-- If a safe fix cannot be determined, explain why instead of inventing one.
+    Requirements:
+    - Use standard unified diff format.
+    - Include --- and +++ file headers.
+    - Include an @@ hunk header.
+    - Prefix removed lines with - and added lines with +.
+    - Include unchanged context lines with a leading space when appropriate.
+    - Change only code supported by the supplied evidence.
+    - Use only the provided file path. Never invent or substitute a file path.
+    - Do not claim the patch has been applied or tested.
+    - Do not include Markdown code fences.
+    - If a safe fix cannot be determined, explain why instead of inventing one.
 
-Return only the diff or a brief explanation.
-"""
-    return {"proposed_patch": ask_model(prompt)}
+    Return only the diff or a brief explanation.
+    """
 
+    proposed_patch = ask_model(prompt)
+
+    validation = validate_patch(
+        patch=proposed_patch,
+        expected_file_path=file_path,
+    )
+
+    if not validation.valid:
+        return {
+            "proposed_patch": (
+                "No patch proposed because the generated patch failed "
+                f"validation: {validation.reason}"
+            )
+        }
+
+    return {"proposed_patch": proposed_patch}
 
 def verify_patch(state: AgentState) -> dict:
     return {
