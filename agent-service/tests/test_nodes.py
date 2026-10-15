@@ -119,3 +119,21 @@ def test_propose_patch_rejects_unconfirmed_bug():
     result = propose_patch(state)
 
     assert "No patch proposed" in result["proposed_patch"]
+
+def test_diagnose_issue_preserves_retrieval_error():
+    state = {
+        "repository": "octocat/Hello-World",
+        "branch": "master",
+        "issue": "Review the project",
+        "plan": "Inspect the relevant source files.",
+        "retrieved_context": "",
+        "retrieval_error": (
+            "Repository retrieval failed: RuntimeError: GitHub unavailable"
+        ),
+    }
+
+    with patch("app.graph.nodes.ask_model") as mock_ask_model:
+        result = diagnose_issue(state)
+
+    assert result["diagnosis"] == state["retrieval_error"]
+    mock_ask_model.assert_not_called()

@@ -80,7 +80,7 @@ def retrieve_context(state: AgentState) -> dict:
         if not selected_files:
             return {
                 "retrieved_context": "",
-                "diagnosis": (
+                "retrieval_error": (
                     "Insufficient evidence: no relevant source files "
                     "were found in the repository."
                 ),
@@ -108,13 +108,19 @@ def retrieve_context(state: AgentState) -> dict:
     except Exception as exc:
         return {
             "retrieved_context": "",
-            "diagnosis": (
+            "retrieval_error": (
                 f"Repository retrieval failed: "
                 f"{type(exc).__name__}: {exc}"
             ),
         }
 
 def diagnose_issue(state: AgentState) -> dict:
+    retrieval_error = state.get("retrieval_error", "").strip()
+
+    if retrieval_error:
+        return {
+            "diagnosis": retrieval_error
+        }
     context = state.get("retrieved_context", "").strip()
 
     if not context:

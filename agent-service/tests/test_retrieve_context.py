@@ -82,4 +82,4 @@ def test_retrieve_context_handles_no_relevant_files():
         result = retrieve_context(state)
 
     assert result["retrieved_context"] == ""
-    assert "Insufficient evidence" in result["diagnosis"]
+    assert "Insufficient evidence" in result["retrieval_error"]

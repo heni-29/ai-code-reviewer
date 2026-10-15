@@ -8,6 +8,7 @@ class AgentState(TypedDict, total=False):
     supplied_context: str
     plan: str
     retrieved_context: str
+    retrieval_error: str
     diagnosis: str
     proposed_patch: str
     verification: str
